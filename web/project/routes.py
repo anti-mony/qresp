@@ -212,11 +212,6 @@ def getTreeInfo():
         jsonify(errors=str(e)), 400
     return jsonify({'listObjects': listObjects,'services':services}), 200
 
-@app.route('/getDirS',methods=["GET"])
-def testingDirectoryStr():
-    obj = Dtree(session.get("project",{}).get("fileServerPath",""))
-    return jsonify(obj.fetchImageFiles(files=True, figuresOnly=True))
-
 @app.route('/info', methods=['POST'])
 def info():
     """
@@ -717,12 +712,15 @@ def parseLatex():
     print("Parsing Latex ...")
     if request.files['file'] is not None:
         try:
-            parser = LatexParser(request.files['file'].read().decode('utf-8'))
+            parser = LatexParser(request.files['file'].read().decode(
+                'utf-8'), fileserverpath=session.get("project", {}).get("fileServerPath", ""))
+        except ValueError as e:
+            return jsonify({"msg": "Please select the data location in the section, Where is the Paper "}), 400
         except Exception as e:
-            return jsonify({"msg":str(e)}), 400          
+            return jsonify({"msg": str(e)}), 400
     else:
-        return jsonify({"msg":"No File Uploaded"}), 400 
-    
+        return jsonify({"msg": "No File Uploaded"}), 400
+
     try:
         authors = parser.formatNames(parser.getAuthors())
         abstract = parser.getAbstract()
@@ -731,28 +729,28 @@ def parseLatex():
         figures = parser.getFigures()
 
         refValues = session.get(CURATOR_FIELD.REFERENCE, None)
-        
+
         if refValues is not None:
             if refValues.get('authors', None) is None or len(refValues.get('authors')) == 0:
                 refValues['authors'] = authors
             if refValues.get('publishedAbstract', None) is None or len(refValues.get('publishedAbstract')) == 0:
                 refValues['publishedAbstract'] = abstract
             if refValues.get('title', None) is None or len(refValues.get('title')) == 0:
-                refValues['title'] = title    
+                refValues['title'] = title
         else:
             refValues = {
-                'authors':authors,
-                'title':title
+                'authors': authors,
+                'title': title
             }
-        
+
         refData = ReferenceForm(**refValues).data
         refData['publishedAbstract'] = abstract
         chartData = [ChartForm(**f).data for f in figures]
-        return jsonify(data={"refData":refData,"chartData":chartData}),200
+        return jsonify(data={"refData": refData, "chartData": chartData}), 200
 
     except Exception as e:
         print("Error : ", str(e))
-        return jsonify({"statusText":str(e)}), 400          
+        return jsonify({"statusText": str(e)}), 400
 
 
 

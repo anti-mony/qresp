@@ -128,6 +128,7 @@ class Dtree():
         """
         if url is not None:
             path = url
+            objects = []
         else:
             path = self.__path
 
@@ -148,8 +149,10 @@ class Dtree():
                 if '/' in file:
                     dataFile.folder = 'true'
                     dataFile.lazy = 'true'
-                self.__listObjects.append(dataFile.__dict__)
-        return self.__listObjects
+                self.__listObjects.append(
+                    dataFile.__dict__) if url is None else objects.append(dataFile.__dict__)
+
+        return self.__listObjects if url is None else objects
 
     def fetchForTreeFromZenodo(self):
         """
@@ -220,39 +223,54 @@ class Dtree():
             print("Config file not found", e)
         return self.__serviceObjects
 
-    def fetchImageFiles(self, files, figuresOnly):
+    def fetchImageFiles(self):
         """
         Get Images in the Directory with URls
         """
-        def getFiles(pathDict, files=files, figuresOnly=figuresOnly):
+        def filter(pathDict, files=True):
             """
-            Filter to keep only Files 
+            Filter to keep only Files/Folders 
             """
-            if "folder" in pathDict and files:
-                return False
-            if pathDict["title"].startswith('.'):
-                return False
-            if "data" in pathDict["title"]:
+
+            # Ignore Folders
+            if files and "folder" in pathDict:
                 return False
 
-            if figuresOnly and any(w in pathDict["key"] for w in ["figure", "image", "chart", "table"]):
-                return True
-            else:
+            # Ignore Hidden Files/Folders
+            if pathDict["title"].startswith('.'):
+                return False
+
+            # Ignore Dataset Folders
+            ignoredKeywords = ["data", "Data", "scripts", "Scripts"]
+            if any(word in pathDict["title"] for word in ignoredKeywords):
+                return False
+
+            # Ignore any other files than images
+            imageFormats = ["png", "jpg", "jpeg", "pdf", "gif"]
+            if files and not any(pathDict["key"].endswith(ext) for ext in imageFormats):
+                return False
+
+            # Keywords
+            keywords = ["figure", "Figure", "image",
+                        "Image", "chart", "Chart", "table", "Table"]
+            if files and not any(w in pathDict["key"] for w in keywords):
+                return False
+
+            if not files and "folder" not in pathDict:
                 return False
 
             return True
 
         currDir = self.fetchForTreeFromHttp()
-        fileList = {d['title']: d['key'] for d in currDir if getFiles(d)}
+        fileList = {d['title']: d['key'] for d in currDir if filter(d)}
         stack = set([folder["key"]
-                     for folder in currDir if getFiles(folder)])
-
+                     for folder in currDir if filter(folder, files=False)])
         while len(stack) > 0:
             currDir = self.fetchForTreeFromHttp(stack.pop())
             fileList.update({d['title']: d['key']
-                             for d in currDir if getFiles(d)})
+                             for d in currDir if filter(d)})
             stack.update([folder["key"]
-                          for folder in currDir if getFiles(folder, files=False)])
+                          for folder in currDir if filter(folder, files=False)])
 
         return (fileList)
 
@@ -894,13 +912,18 @@ class LatexParser:
     Latex Parser to Autofill Fields
     """
 
-    def __init__(self, tex_file, language_model=None):
+    def __init__(self, tex_file, language_model=None, fileserverpath=None):
         """
         Latex Parser Initializer
         :param tex_file: Text from Latex input file to be parsed
         :param language_model: Spacy Language Model for Named Entity Recognition
         """
         self.soup = TexSoup(str(tex_file))
+
+        if fileserverpath.strip() == "":
+            raise ValueError()
+
+        fsObj = Dtree(fileserverpath)
 
         if language_model is None:
             self.language_model = spacy.load("en_core_web_sm", disable=[
@@ -958,7 +981,7 @@ class LatexParser:
         try:
             return self.soup.title.args[0].value
         except AssertionError as e:
-            print(e,file=sys.stderr)
+            print(e, file=sys.stderr)
             return ""
 
     def getAbstract(self):
@@ -983,7 +1006,7 @@ class LatexParser:
         """
         figure_count = 0
         table_count = 0
-        fgrs = self.soup.find_all(['figure','table','table*'])
+        fgrs = self.soup.find_all(['figure', 'table', 'table*'])
         figures = []
         for fig in fgrs:
 
@@ -992,7 +1015,7 @@ class LatexParser:
 
             try:
                 caption = " ".join("".join(line.text).replace("\n", "").strip()
-                            for line in fig.caption.all).strip()
+                                   for line in fig.caption.all).strip()
             except AssertionError as e:
                 print(e, file=sys.stderr)
                 continue
@@ -1018,11 +1041,11 @@ class LatexParser:
                 imageFile = ''
 
             figures.append({
-                "id":id,
-                "number": num, 
+                "id": id,
+                "number": num,
                 "caption": caption,
                 "imageFile": imageFile,
-                "properties":",".join(entity.text for entity in processed_caption.ents),
-                "files":""})
+                "properties": ",".join(entity.text for entity in processed_caption.ents),
+                "files": ""})
 
         return figures

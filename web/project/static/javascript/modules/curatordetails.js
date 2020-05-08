@@ -5,7 +5,6 @@ $(function(){
         $('#loadingAni').show();
     })
     .ajaxComplete(function () {
-        console.log("Finished")
         $('#loadingAni').hide();
     });
 
@@ -61,8 +60,14 @@ $(function(){
                 }
             },
             error: function (xhr, status, error) {
-                var errorMessage = xhr.status + ': ' + xhr.statusText;
-                bootbox.alert("Unable to Parse Latex Error "+ (errorMessage));
+                console.log(xhr)
+                if(xhr.responseJSON.msg === ""){
+                    var errorMessage = xhr.status + ': ' + xhr.statusText;
+                }
+                else{
+                    var errorMessage = xhr.responseJSON.msg;
+                }
+                bootbox.alert("Unable to Parse Latex Error !\n"+ (errorMessage));
             }
         });
     });
