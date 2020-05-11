@@ -999,7 +999,7 @@ class LatexParser:
             print(e, file=sys.stderr)
             return ""
 
-    def getFigures(self):
+    def getFigures(self, fileList=None, fileServerPath=None):
         """
         Get All Figure Details of the paper  
         :return: List<Dict>
@@ -1036,7 +1036,12 @@ class LatexParser:
                 num = figure_count
 
             if fig.includegraphics is not None:
-                imageFile = fig.includegraphics.args[1].value
+                filePath = str(fig.includegraphics.args[1].value)
+                imageFile = filePath[filePath.rfind('/')+1:]                
+
+                if fileList is not None:
+                    if imageFile in fileList:
+                        imageFile = fileList[imageFile][len(fileServerPath):]
             else:
                 imageFile = ''
 

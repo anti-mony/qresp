@@ -3,7 +3,7 @@
 <div class="row">
   <div class="col-md-8">
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-md-4">
         <span
           class="input-group-btn"
           data-toggle="tooltip"
@@ -22,7 +22,7 @@
         </span>
       </div>
 
-      <div class="col-md-4 p-0">
+      <div class="col-md-6">
         <span
           class="input-group-btn"
           data-toggle="tooltip"
@@ -223,27 +223,6 @@
             />
           </span>
         </form>
-        <div class="">
-          <span
-            class="input-group-btn"
-            data-toggle="tooltip"
-            title="Parse info. from Latex"
-          >
-            <label
-              for="latex-file"
-              name="latexparser"
-              class="btn btn-theme-colored btn-lg btn-block"
-              style="font-weight: bold; height: 50px;"
-              ><i class="fa fa-cloud-upload"></i> Upload Latex File</label
-            >
-            <input
-              type="file"
-              id="latex-file"
-              accept=".tex"
-              style="display: none;"
-            />
-          </span>
-        </div>
       </div>
     </div>
   </div>
@@ -1023,6 +1002,58 @@
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Latex Upload Modal #}
+<div
+  class="modal fade"
+  id="latexUploadModal"
+  role="dialog"
+  aria-label="Latex Upload Modal"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content p-1">
+      <div class="modal-header">
+        <h5 class="modal-title">Latex Parser</h5>
+      </div>
+      <div class="modal-body">
+        Do you want to upload a Latex file to auto-fill some fields ?
+        <div class="row my-4">
+          <div class="col-4">
+            <span
+              data-toggle="tooltip"
+              title="Parse info. from Latex"
+            >
+              <label
+                for="latex-file"
+                name="latexparser"
+                class="btn btn-theme-colored btn-lg btn-block"
+                style="font-weight: bold; height: 50px;"
+                ><i class="fa fa-cloud-upload"></i>  Upload</label
+              >
+              <input
+                type="file"
+                id="latex-file"
+                accept=".tex"
+                style="display: none;"
+              />
+            </span>
+          </div>
+          <div class="col-4">
+            <button
+              class="close"
+              type="button"
+              data-dismiss="modal"
+              aria-label="Close Upload Latex Modal"
+              style="font-weight: bold; height: 50px;float: none;"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>

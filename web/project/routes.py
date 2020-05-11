@@ -709,11 +709,13 @@ def downloadfile(file=None):
 
 @app.route('/parseLatex', methods=['POST'])
 def parseLatex():
-    print("Parsing Latex ...")
+    
     if request.files['file'] is not None:
         try:
+            fileserverpath = session.get("project", {}).get("fileServerPath", "")
             parser = LatexParser(request.files['file'].read().decode(
-                'utf-8'), fileserverpath=session.get("project", {}).get("fileServerPath", ""))
+                'utf-8'), fileserverpath=fileserverpath) 
+            serverFiles = Dtree(fileserverpath).fetchImageFiles()
         except ValueError as e:
             return jsonify({"msg": "Please select the data location in the section, Where is the Paper "}), 400
         except Exception as e:
@@ -724,10 +726,9 @@ def parseLatex():
     try:
         authors = parser.formatNames(parser.getAuthors())
         abstract = parser.getAbstract()
-        print("GOT ABSTRACT")
         title = parser.getTitle()
-        figures = parser.getFigures()
-
+        figures = parser.getFigures(fileList=serverFiles, fileServerPath=fileserverpath)
+        
         refValues = session.get(CURATOR_FIELD.REFERENCE, None)
 
         if refValues is not None:
@@ -742,11 +743,18 @@ def parseLatex():
                 'authors': authors,
                 'title': title
             }
-
+        
         refData = ReferenceForm(**refValues).data
         refData['publishedAbstract'] = abstract
         chartData = [ChartForm(**f).data for f in figures]
-        return jsonify(data={"refData": refData, "chartData": chartData}), 200
+
+        # Store Data in Session
+        session[CURATOR_FIELD.REFERENCE] = refData
+        session[CURATOR_FIELD.CHARTS] = chartData
+
+        return jsonify("success"), 200
+
+        return jsonify(data={"refData": refData, "chartData": chartData, "path":fileserverpath}), 200
 
     except Exception as e:
         print("Error : ", str(e))
