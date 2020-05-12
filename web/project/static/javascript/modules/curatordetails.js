@@ -54,7 +54,6 @@ $(function () {
                 window.location.reload();
             },
             error: function (xhr, status, error) {
-                console.log(xhr)
                 if (xhr.responseJSON.msg === "") {
                     var errorMessage = xhr.status + ': ' + xhr.statusText;
                 }
@@ -191,7 +190,6 @@ $(function () {
             url: "charts",
             data: $('#chartform').serialize(), // serializes the form's elements.
             success: function (data) {
-                console.log(data)
                 buildChartTables(data.chartList, data.fileServerPath);
                 addToWorkflow();
             }
@@ -735,8 +733,6 @@ function callTreeDataForCuration(searchdata) {
 }
 
 function buildChartTables(chartDetails, path) {
-    console.log(chartDetails);
-    console.log(path);
     $('#chartModal').modal('hide');
     if (chartDetails && chartDetails.length > 0) {
         $('#editWorkflow').show();
@@ -795,10 +791,11 @@ function buildChartTables(chartDetails, path) {
                                     + " "
                                     + $.trim(row.number)
                                     + "</h6></div></div>";
-
+                                
                                 chartInfo += "<div id='toolbar'><div style='width: 100%; float: left; margin-bottom: 15px;'>";
                                 chartInfo += "<div class='button-icon'></div>";
                                 chartInfo += "<ul class='icons-charts'>";
+
                                 var imageFileName = $.trim(row.imageFile);
                                 var lastSlash = imageFileName.lastIndexOf("/");
                                 var imageName = (lastSlash > 0) ? imageFileName

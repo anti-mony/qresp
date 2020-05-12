@@ -8,7 +8,9 @@ from lxml import html
 from urllib.request import urlopen
 from project.config import Config
 from TexSoup import TexSoup
+from difflib import get_close_matches
 import spacy
+
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -246,7 +248,7 @@ class Dtree():
                 return False
 
             # Ignore any other files than images
-            imageFormats = ["png", "jpg", "jpeg", "pdf", "gif"]
+            imageFormats = ["png", "jpg", "jpeg", "gif"]
             if files and not any(pathDict["key"].endswith(ext) for ext in imageFormats):
                 return False
 
@@ -1037,14 +1039,15 @@ class LatexParser:
 
             if fig.includegraphics is not None:
                 filePath = str(fig.includegraphics.args[1].value)
-                imageFile = filePath[filePath.rfind('/')+1:]                
-
+                imageFile = filePath[filePath.rfind('/')+1:].strip()
+                print("ORIGINAL IMAGE FILE : ", imageFile)
                 if fileList is not None:
-                    if imageFile in fileList:
-                        imageFile = fileList[imageFile][len(fileServerPath):]
+                    closestFileName = get_close_matches(imageFile, fileList.keys(),1)[0]
+                    if closestFileName in fileList:
+                        imageFile = fileList[closestFileName][len(fileServerPath)+1:]
             else:
                 imageFile = ''
-
+            
             figures.append({
                 "id": id,
                 "number": num,
